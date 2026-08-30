@@ -322,7 +322,19 @@ class HikvisionAccessAPI:
                                 raise HikvisionAuthError(
                                     f"Credentials rejected for {method} {uri}"
                                 )
-                            self._auth.handle_401(resp.headers.get("WWW-Authenticate"))
+                            try:
+                                self._auth.handle_401(
+                                    resp.headers.get("WWW-Authenticate")
+                                )
+                            except DigestAuthError as err:
+                                # A 401 without a parsable Digest challenge is
+                                # the firmware refusing service (busy/lockout
+                                # protection), not a credential verdict.
+                                self._auth.clear()
+                                raise HikvisionResponseError(
+                                    f"401 without Digest challenge for "
+                                    f"{method} {uri} (device busy?)"
+                                ) from err
                             continue
                         if resp.status == 403:
                             raise HikvisionAuthError(

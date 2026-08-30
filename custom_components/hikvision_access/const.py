@@ -73,7 +73,16 @@ USER_REFRESH_INTERVAL_SECONDS = 3600
 # hundreds of swipes between refreshes without growing unbounded).
 DEDUP_CACHE_SIZE = 1000
 
-# Consecutive auth failures before we give up and trigger re-auth. The
-# firmware throws sporadic 401s under concurrent load even with valid
-# credentials, so a single 401 must never invalidate the entry.
-AUTH_FAILURE_THRESHOLD = 3
+# Re-auth gating: the firmware throws sporadic 401s under concurrent load
+# even with valid credentials (observed live: ~1 refusal per minute while
+# hikvision_next and the legacy poller run alongside). Re-auth is only
+# triggered after this many consecutive failures AND this much elapsed
+# time since the first failure of the streak — a short burst never
+# invalidates the entry, a genuinely wrong password does within a minute.
+AUTH_FAILURE_THRESHOLD = 5
+AUTH_FAILURE_MIN_SECONDS = 60
+
+# Single failed polls keep the previous data (with no new events) so the
+# entities do not flicker unavailable on every firmware hiccup; only this
+# many consecutive failures mark the update as failed.
+TRANSIENT_FAILURE_TOLERANCE = 5

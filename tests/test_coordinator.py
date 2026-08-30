@@ -7,8 +7,9 @@ from unittest.mock import MagicMock
 
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import ConfigEntryAuthFailed
+from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 from homeassistant.helpers.update_coordinator import UpdateFailed
+import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.hikvision_access.api import HikvisionAuthError
@@ -98,25 +99,48 @@ async def test_poll_window_follows_last_event(hass: HomeAssistant) -> None:
     assert last_start == newest - timedelta(seconds=POLL_OVERLAP_SECONDS)
 
 
-async def test_auth_errors_need_three_strikes(hass: HomeAssistant) -> None:
-    """Sporadic 401s stay transient; the third in a row triggers re-auth."""
+async def test_transient_failures_keep_previous_data(hass: HomeAssistant) -> None:
+    """Single failed polls keep data and report no events; a streak fails."""
+    from custom_components.hikvision_access.api import HikvisionConnectionError
+
     api = make_mock_api([])
     coordinator = await make_coordinator(hass, api)
 
-    api.async_get_acs_events.side_effect = HikvisionAuthError("denied")
+    api.async_get_acs_events.side_effect = HikvisionConnectionError("down")
+    for _ in range(4):
+        await coordinator.async_refresh()
+        assert coordinator.last_update_success
+        assert coordinator.data.new_events == []
+
     await coordinator.async_refresh()
     assert not coordinator.last_update_success
     assert isinstance(coordinator.last_exception, UpdateFailed)
 
+
+async def test_auth_reauth_needs_streak_and_time(hass: HomeAssistant) -> None:
+    """401s only trigger re-auth after enough failures over enough time."""
+    api = make_mock_api([])
+    coordinator = await make_coordinator(hass, api)
+
+    api.async_get_acs_events.side_effect = HikvisionAuthError("denied")
+    for _ in range(4):
+        await coordinator.async_refresh()
+        assert coordinator.last_update_success  # absorbed transiently
+
+    # Fifth consecutive failure: transient tolerance exhausted, but the
+    # streak is still too young for re-auth.
     await coordinator.async_refresh()
+    assert not coordinator.last_update_success
     assert isinstance(coordinator.last_exception, UpdateFailed)
 
+    # Same streak, but old enough now -> re-auth.
+    coordinator._first_auth_failure = datetime.now() - timedelta(minutes=2)
     await coordinator.async_refresh()
     assert isinstance(coordinator.last_exception, ConfigEntryAuthFailed)
 
 
-async def test_success_resets_auth_strikes(hass: HomeAssistant) -> None:
-    """A successful poll between 401s resets the strike counter."""
+async def test_success_resets_failure_streaks(hass: HomeAssistant) -> None:
+    """A successful poll resets both failure counters."""
     api = make_mock_api([])
     coordinator = await make_coordinator(hass, api)
 
@@ -128,24 +152,23 @@ async def test_success_resets_auth_strikes(hass: HomeAssistant) -> None:
     api.async_get_acs_events.return_value = []
     await coordinator.async_refresh()
     assert coordinator.last_update_success
-
-    api.async_get_acs_events.side_effect = HikvisionAuthError("denied")
-    await coordinator.async_refresh()
-    await coordinator.async_refresh()
-    assert isinstance(coordinator.last_exception, UpdateFailed)
+    assert coordinator._auth_failures == 0
+    assert coordinator._first_auth_failure is None
+    assert coordinator._poll_failures == 0
 
 
-async def test_connection_error_becomes_update_failed(hass: HomeAssistant) -> None:
-    """Transport errors mark the update failed without touching re-auth."""
-    from custom_components.hikvision_access.api import HikvisionConnectionError
-
+async def test_setup_auth_error_retries_instead_of_reauth(
+    hass: HomeAssistant,
+) -> None:
+    """An auth hiccup during setup raises ConfigEntryNotReady, not re-auth."""
     api = make_mock_api([])
-    coordinator = await make_coordinator(hass, api)
-
-    api.async_get_acs_events.side_effect = HikvisionConnectionError("down")
-    await coordinator.async_refresh()
-    assert not coordinator.last_update_success
-    assert isinstance(coordinator.last_exception, UpdateFailed)
+    api.async_get_device_info.side_effect = HikvisionAuthError("busy")
+    entry = MockConfigEntry(domain=DOMAIN, data={}, options={})
+    entry.add_to_hass(hass)
+    entry.mock_state(hass, ConfigEntryState.SETUP_IN_PROGRESS)
+    coordinator = HikvisionAccessCoordinator(hass, entry, api)
+    with pytest.raises(ConfigEntryNotReady):
+        await coordinator.async_config_entry_first_refresh()
 
 
 async def test_user_refresh_when_due(hass: HomeAssistant) -> None:

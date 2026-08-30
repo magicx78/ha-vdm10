@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.1.1] - 2026-08-30
+
+### Fixed
+- Ständige „Neu anmelden"-Aufforderungen im Parallelbetrieb: Die Firmware
+  verweigert unter Last sporadisch Anfragen mit einem 401 **ohne**
+  Digest-Challenge (~1×/Minute beobachtet). Das gilt jetzt als transienter
+  Gerätefehler statt als Zugangsdaten-Problem. Re-Auth startet nur noch
+  nach ≥5 aufeinanderfolgenden Fehlschlägen über ≥60 s; beim Setup wird
+  stattdessen automatisch neu versucht (ConfigEntryNotReady).
+- Entitäten flackern nicht mehr bei einzelnen Fehl-Polls: bis zu 4
+  aufeinanderfolgende transiente Fehler behalten still den letzten
+  Datenstand (ohne Events nachzufeuern).
+- Deprecation-Warnung zum Options-Update-Listener behoben
+  (`async_schedule_reload`).
+
 ## [0.1.0] - 2026-08-30
 
 ### Added

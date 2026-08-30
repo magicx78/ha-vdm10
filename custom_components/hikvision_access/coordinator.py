@@ -33,6 +33,7 @@ from .api import (
     HikvisionUser,
 )
 from .const import (
+    AUTH_FAILURE_MIN_SECONDS,
     AUTH_FAILURE_THRESHOLD,
     DEDUP_CACHE_SIZE,
     DEFAULT_POLL_INTERVAL,
@@ -41,6 +42,7 @@ from .const import (
     OPT_POLL_INTERVAL,
     POLL_OVERLAP_SECONDS,
     STARTUP_LOOKBACK_SECONDS,
+    TRANSIENT_FAILURE_TOLERANCE,
     USER_REFRESH_INTERVAL_SECONDS,
 )
 
@@ -87,6 +89,8 @@ class HikvisionAccessCoordinator(DataUpdateCoordinator[HikvisionAccessData]):
         self._last_device_time: datetime | None = None
         self._last_user_refresh: datetime | None = None
         self._auth_failures = 0
+        self._first_auth_failure: datetime | None = None
+        self._poll_failures = 0
         self._device_info: HikvisionDeviceInfo | None = None
         self._door_capabilities: DoorCapabilities | None = None
         self._users: dict[str, HikvisionUser] = {}
@@ -102,9 +106,13 @@ class HikvisionAccessCoordinator(DataUpdateCoordinator[HikvisionAccessData]):
                 user.employee_no: user for user in await self.api.async_get_users()
             }
             self._last_user_refresh = datetime.now()
-        except HikvisionAuthError as err:
-            raise ConfigEntryAuthFailed(str(err)) from err
         except HikvisionAccessError as err:
+            # Also for auth errors: during setup a rejection is far more
+            # likely a firmware hiccup than a wrong password (the config
+            # flow validated the credentials moments earlier). UpdateFailed
+            # lets Home Assistant retry with backoff instead of nagging for
+            # credentials; re-auth only ever starts from the gated streak
+            # logic in _async_update_data.
             raise UpdateFailed(f"Device initialization failed: {err}") from err
 
     async def _async_update_data(self) -> HikvisionAccessData:
@@ -123,16 +131,25 @@ class HikvisionAccessCoordinator(DataUpdateCoordinator[HikvisionAccessData]):
                 await self._refresh_users(now)
         except HikvisionAuthError as err:
             self._auth_failures += 1
-            if self._auth_failures >= AUTH_FAILURE_THRESHOLD:
+            if self._first_auth_failure is None:
+                self._first_auth_failure = now
+            streak_seconds = (now - self._first_auth_failure).total_seconds()
+            if (
+                self._auth_failures >= AUTH_FAILURE_THRESHOLD
+                and streak_seconds >= AUTH_FAILURE_MIN_SECONDS
+            ):
                 raise ConfigEntryAuthFailed(str(err)) from err
-            raise UpdateFailed(
-                f"Transient auth error "
-                f"({self._auth_failures}/{AUTH_FAILURE_THRESHOLD}): {err}"
-            ) from err
+            return self._transient_failure(
+                f"auth error ({self._auth_failures}/{AUTH_FAILURE_THRESHOLD}, "
+                f"{streak_seconds:.0f}s): {err}",
+                err,
+            )
         except HikvisionAccessError as err:
-            raise UpdateFailed(str(err)) from err
+            return self._transient_failure(str(err), err)
 
         self._auth_failures = 0
+        self._first_auth_failure = None
+        self._poll_failures = 0
         new_events = self._extract_new_events(events)
 
         if self._device_info is None or self._door_capabilities is None:
@@ -143,6 +160,39 @@ class HikvisionAccessCoordinator(DataUpdateCoordinator[HikvisionAccessData]):
             users=dict(self._users),
             last_granted=dict(self._last_granted),
             new_events=new_events,
+            last_event=self._last_event,
+        )
+
+    def _transient_failure(
+        self, message: str, err: HikvisionAccessError
+    ) -> HikvisionAccessData:
+        """Absorb a failed poll, keeping the previous data alive.
+
+        The firmware sporadically refuses single requests while other
+        clients poll it (observed live: ~1 refusal/minute); entities must
+        not flicker unavailable for that. Only a streak of failures — or
+        having no data at all yet — becomes UpdateFailed.
+        """
+        self._poll_failures += 1
+        if (
+            self.data is None
+            or self._device_info is None
+            or self._door_capabilities is None
+            or self._poll_failures >= TRANSIENT_FAILURE_TOLERANCE
+        ):
+            raise UpdateFailed(message) from err
+        _LOGGER.debug(
+            "Transient poll failure (%d/%d), keeping previous data: %s",
+            self._poll_failures,
+            TRANSIENT_FAILURE_TOLERANCE,
+            message,
+        )
+        return HikvisionAccessData(
+            device_info=self._device_info,
+            door_capabilities=self._door_capabilities,
+            users=dict(self._users),
+            last_granted=dict(self._last_granted),
+            new_events=[],
             last_event=self._last_event,
         )
 

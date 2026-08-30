@@ -149,6 +149,13 @@ async def test_repeated_401_raises_auth_error() -> None:
         await make_api(session).async_get_device_info()
 
 
+async def test_401_without_challenge_is_transient_not_auth() -> None:
+    """A 401 lacking a Digest challenge is a busy device, not bad creds."""
+    session = FakeSession([FakeResponse(401, {}, "device busy")])
+    with pytest.raises(HikvisionResponseError):
+        await make_api(session).async_get_device_info()
+
+
 async def test_403_raises_auth_error() -> None:
     """403 (permission) maps to the auth error."""
     session = FakeSession([FakeResponse(403)])

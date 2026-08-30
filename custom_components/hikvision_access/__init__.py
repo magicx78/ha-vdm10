@@ -75,5 +75,5 @@ async def async_unload_entry(
 async def _async_options_updated(
     hass: HomeAssistant, entry: HikvisionAccessConfigEntry
 ) -> None:
-    """Apply changed options by reloading the entry."""
-    await hass.config_entries.async_reload(entry.entry_id)
+    """Apply changed options by scheduling an entry reload."""
+    hass.config_entries.async_schedule_reload(entry.entry_id)
