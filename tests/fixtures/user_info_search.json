@@ -1,0 +1,61 @@
+{
+  "UserInfoSearch": {
+    "searchID": "hikvision_access",
+    "responseStatusStrg": "OK",
+    "numOfMatches": 3,
+    "totalMatches": 3,
+    "UserInfo": [
+      {
+        "employeeNo": "Alice",
+        "name": "Alice",
+        "userType": "normal",
+        "Valid": {
+          "enable": false,
+          "beginTime": "2026-08-30T00:00:00",
+          "endTime": "2036-08-29T23:59:59",
+          "timeType": "local"
+        },
+        "doorRight": "1",
+        "RightPlan": [],
+        "numOfFace": 0,
+        "numOfFP": 0,
+        "numOfCard": 1,
+        "localUIRight": false
+      },
+      {
+        "employeeNo": "Bob",
+        "name": "Bob",
+        "userType": "normal",
+        "Valid": {
+          "enable": false,
+          "beginTime": "2026-08-30T00:00:00",
+          "endTime": "2036-08-29T23:59:59",
+          "timeType": "local"
+        },
+        "doorRight": "1",
+        "RightPlan": [],
+        "numOfFace": 0,
+        "numOfFP": 0,
+        "numOfCard": 1,
+        "localUIRight": false
+      },
+      {
+        "employeeNo": "Carol",
+        "name": "Carol",
+        "userType": "normal",
+        "Valid": {
+          "enable": false,
+          "beginTime": "2026-08-30T00:00:00",
+          "endTime": "2036-08-29T23:59:59",
+          "timeType": "local"
+        },
+        "doorRight": "1",
+        "RightPlan": [],
+        "numOfFace": 0,
+        "numOfFP": 0,
+        "numOfCard": 1,
+        "localUIRight": false
+      }
+    ]
+  }
+}

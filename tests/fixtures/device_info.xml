@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DeviceInfo version="2.0" xmlns="http://www.isapi.org/ver20/XMLSchema">
+<deviceName>Front Door</deviceName>
+<deviceID>00000000-0000-0000-0000-000000000000</deviceID>
+<deviceDescription>VIS</deviceDescription>
+<model>VDM10-VM-2W-2.0</model>
+<serialNumber>VDM10-TEST0000000000000001</serialNumber>
+<macAddress>00:11:22:33:44:55</macAddress>
+<firmwareVersion>V3.7.1</firmwareVersion>
+<firmwareReleasedDate>build 251112</firmwareReleasedDate>
+<hardwareVersion>1-1-1</hardwareVersion>
+<deviceType>VIS</deviceType>
+<subDeviceType>doorStation</subDeviceType>
+<alarmOutNum>2</alarmOutNum>
+<alarmInNum>4</alarmInNum>
+</DeviceInfo>

@@ -1,0 +1,60 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Mit dem Gerät verbinden",
+        "description": "Verbindet sich per ISAPI mit Digest-Authentifizierung mit einem Hikvision-Zutrittsgerät (z. B. einer Türstation wie der Metzler VDM10).",
+        "data": {
+          "host": "Host",
+          "port": "Port",
+          "username": "Benutzername",
+          "password": "Passwort",
+          "ssl": "HTTPS verwenden",
+          "verify_ssl": "SSL-Zertifikat prüfen"
+        },
+        "data_description": {
+          "host": "IP-Adresse oder Hostname des Geräts.",
+          "port": "ISAPI-Port, üblicherweise 80 (bzw. 443 mit HTTPS).",
+          "username": "Gerätebenutzer, üblicherweise admin.",
+          "verify_ssl": "Nur relevant, wenn HTTPS aktiviert ist."
+        }
+      },
+      "reauth_confirm": {
+        "title": "Zugangsdaten neu eingeben",
+        "description": "Das Gerät hat die gespeicherten Zugangsdaten wiederholt abgelehnt. Gib die aktuellen ein.",
+        "data": {
+          "username": "Benutzername",
+          "password": "Passwort"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Verbindung zum Gerät fehlgeschlagen",
+      "invalid_auth": "Das Gerät hat diese Zugangsdaten abgelehnt",
+      "timeout_connect": "Das Gerät hat nicht rechtzeitig geantwortet",
+      "unknown": "Unerwarteter Fehler — Details stehen im Log"
+    },
+    "abort": {
+      "already_configured": "Dieses Gerät ist bereits eingerichtet",
+      "reauth_successful": "Neuanmeldung erfolgreich",
+      "unique_id_mismatch": "Das ist ein anderes Gerät als das ursprünglich eingerichtete"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Optionen",
+        "data": {
+          "poll_interval": "Abfrageintervall (Sekunden)",
+          "mask_card_data": "Kartennummern maskieren",
+          "door_pulse_seconds": "Türimpuls-Dauer (Sekunden)"
+        },
+        "data_description": {
+          "poll_interval": "Wie oft das Zutrittsprotokoll abgefragt wird. Kleiner bedeutet schnellere Reaktion.",
+          "mask_card_data": "Zeigt in Entitäts-Attributen nur die letzten Stellen von Karten- und Personalnummern. Recorder-Verlauf, Backups und Screenshots enthalten dann nie die vollen Nummern.",
+          "door_pulse_seconds": "Für Relais-Kommandos, die ein explizites Ausschalten brauchen."
+        }
+      }
+    }
+  }
+}

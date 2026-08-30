@@ -1,0 +1,78 @@
+{
+  "AcsEvent": {
+    "searchID": "hikvision_access",
+    "totalMatches": 8,
+    "responseStatusStrg": "OK",
+    "numOfMatches": 8,
+    "InfoList": [
+      {
+        "major": 5,
+        "minor": 1,
+        "time": "2026-08-30 12:58:42",
+        "employeeNoString": "Alice",
+        "cardNo": "1234567890",
+        "name": "Alice",
+        "doorNo": 1,
+        "mask": "unknown"
+      },
+      {
+        "major": 5,
+        "minor": 21,
+        "time": "2026-08-30 12:58:42",
+        "doorNo": 1,
+        "mask": "unknown"
+      },
+      {
+        "major": 5,
+        "minor": 214,
+        "time": "2026-08-30 12:58:42",
+        "employeeNoString": "",
+        "cardNo": "",
+        "name": "",
+        "doorNo": 1,
+        "mask": "unknown"
+      },
+      {
+        "major": 5,
+        "minor": 22,
+        "time": "2026-08-30 12:58:44",
+        "doorNo": 1,
+        "mask": "unknown"
+      },
+      {
+        "major": 5,
+        "minor": 21,
+        "time": "2026-08-30 13:21:38",
+        "doorNo": 1,
+        "mask": "unknown"
+      },
+      {
+        "major": 5,
+        "minor": 1,
+        "time": "2026-08-30 13:21:38",
+        "employeeNoString": "Bob",
+        "cardNo": "9876543210",
+        "name": "Bob",
+        "doorNo": 1,
+        "mask": "unknown"
+      },
+      {
+        "major": 5,
+        "minor": 214,
+        "time": "2026-08-30 13:21:39",
+        "employeeNoString": "",
+        "cardNo": "",
+        "name": "",
+        "doorNo": 1,
+        "mask": "unknown"
+      },
+      {
+        "major": 5,
+        "minor": 22,
+        "time": "2026-08-30 13:21:40",
+        "doorNo": 1,
+        "mask": "unknown"
+      }
+    ]
+  }
+}

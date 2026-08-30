@@ -1,0 +1,12 @@
+{
+  "domain": "hikvision_access",
+  "name": "Hikvision Access Control",
+  "codeowners": ["@magicx78"],
+  "config_flow": true,
+  "documentation": "https://github.com/magicx78/ha-vdm10",
+  "integration_type": "device",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/magicx78/ha-vdm10/issues",
+  "requirements": [],
+  "version": "0.0.1"
+}

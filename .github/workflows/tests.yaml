@@ -1,0 +1,30 @@
+name: Tests
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # 3.13 -> pip resolves an older pytest-homeassistant-custom-component
+        #         (and with it an older HA core) = our floor
+        # 3.14 -> pip resolves the latest = current HA core
+        python-version: ["3.13", "3.14"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: pip install pytest-homeassistant-custom-component ruff
+      - name: Lint (ruff)
+        run: |
+          ruff check custom_components/ tests/
+          ruff format --check custom_components/ tests/
+      - name: Run tests
+        run: pytest tests/ -v --tb=short

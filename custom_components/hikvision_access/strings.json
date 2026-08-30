@@ -1,0 +1,60 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to the device",
+        "description": "Connects to a Hikvision access-control device (e.g. a door station like the Metzler VDM10) via ISAPI with Digest authentication.",
+        "data": {
+          "host": "Host",
+          "port": "Port",
+          "username": "Username",
+          "password": "Password",
+          "ssl": "Use HTTPS",
+          "verify_ssl": "Verify SSL certificate"
+        },
+        "data_description": {
+          "host": "IP address or hostname of the device.",
+          "port": "ISAPI port, usually 80 (or 443 with HTTPS).",
+          "username": "Device user, usually admin.",
+          "verify_ssl": "Only relevant when HTTPS is enabled."
+        }
+      },
+      "reauth_confirm": {
+        "title": "Re-enter credentials",
+        "description": "The device rejected the stored credentials repeatedly. Enter the current ones.",
+        "data": {
+          "username": "Username",
+          "password": "Password"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect to the device",
+      "invalid_auth": "The device rejected these credentials",
+      "timeout_connect": "The device did not answer in time",
+      "unknown": "Unexpected error — check the logs"
+    },
+    "abort": {
+      "already_configured": "This device is already configured",
+      "reauth_successful": "Re-authentication was successful",
+      "unique_id_mismatch": "This is a different device than the one originally configured"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Options",
+        "data": {
+          "poll_interval": "Poll interval (seconds)",
+          "mask_card_data": "Mask card numbers",
+          "door_pulse_seconds": "Door pulse length (seconds)"
+        },
+        "data_description": {
+          "poll_interval": "How often the access event log is polled. Lower means faster reaction.",
+          "mask_card_data": "Show only the last digits of card and employee numbers in entity attributes. Recorder history, backups and screenshots then never contain the full numbers.",
+          "door_pulse_seconds": "Used for relay-style door commands that need an explicit off."
+        }
+      }
+    }
+  }
+}
