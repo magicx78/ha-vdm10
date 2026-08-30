@@ -45,6 +45,16 @@ PATH_USER_COUNT = "/ISAPI/AccessControl/UserInfo/Count?format=json"
 EVENT_MAJOR_ACS = 5
 EVENT_MINOR_ACCEPTED = 1
 
+# Event entity types. Classification (see AccessEvent.event_type): minor 1
+# with a name = accepted; a card number without a name = unknown card; any
+# other minor on a card-carrying event = rejected. The concrete reject
+# minors of the reference firmware get verified during the M3 acceptance
+# test (a foreign card swipe).
+EVENT_TYPE_ACCEPTED = "card_accepted"
+EVENT_TYPE_REJECTED = "card_rejected"
+EVENT_TYPE_UNKNOWN = "card_unknown"
+EVENT_TYPES = [EVENT_TYPE_ACCEPTED, EVENT_TYPE_REJECTED, EVENT_TYPE_UNKNOWN]
+
 # Search pagination
 ACS_EVENT_PAGE_SIZE = 30
 USER_SEARCH_PAGE_SIZE = 30

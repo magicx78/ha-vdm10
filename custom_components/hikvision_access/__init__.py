@@ -24,8 +24,12 @@ from .coordinator import HikvisionAccessCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
-# Entity platforms arrive in M2 (event, sensor, lock, button).
-PLATFORMS: list[Platform] = []
+PLATFORMS: list[Platform] = [
+    Platform.BUTTON,
+    Platform.EVENT,
+    Platform.LOCK,
+    Platform.SENSOR,
+]
 
 
 @dataclass

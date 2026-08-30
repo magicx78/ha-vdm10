@@ -56,5 +56,36 @@
         }
       }
     }
+  },
+  "entity": {
+    "event": {
+      "door": {
+        "name": "Tür {door_no}",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "card_accepted": "Karte akzeptiert",
+              "card_rejected": "Karte abgelehnt",
+              "card_unknown": "Unbekannte Karte"
+            }
+          }
+        }
+      }
+    },
+    "sensor": {
+      "last_granted": {
+        "name": "Letzte Freigabe {person}"
+      }
+    },
+    "lock": {
+      "door_opener": {
+        "name": "Türöffner"
+      }
+    },
+    "button": {
+      "open_door": {
+        "name": "Tür {door_no} öffnen"
+      }
+    }
   }
 }

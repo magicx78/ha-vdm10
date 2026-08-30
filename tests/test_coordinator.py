@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import MagicMock
 
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.core import HomeAssistant
@@ -11,7 +11,7 @@ from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import UpdateFailed
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.hikvision_access.api import AccessEvent, HikvisionAuthError
+from custom_components.hikvision_access.api import HikvisionAuthError
 from custom_components.hikvision_access.const import (
     DOMAIN,
     OPT_POLL_INTERVAL,
@@ -20,40 +20,7 @@ from custom_components.hikvision_access.const import (
 )
 from custom_components.hikvision_access.coordinator import HikvisionAccessCoordinator
 
-from .conftest import TEST_DEVICE, TEST_DOOR_CAPS, TEST_USERS
-
-
-def make_burst(when: datetime, name: str, card: str) -> list[AccessEvent]:
-    """One card swipe as the device logs it: accepted + three status events."""
-    return [
-        AccessEvent(
-            time=when, minor=1, door_no=1, card_no=card, employee_no=name, name=name
-        ),
-        AccessEvent(
-            time=when, minor=21, door_no=1, card_no="", employee_no="", name=""
-        ),
-        AccessEvent(
-            time=when, minor=214, door_no=1, card_no="", employee_no="", name=""
-        ),
-        AccessEvent(
-            time=when + timedelta(seconds=2),
-            minor=22,
-            door_no=1,
-            card_no="",
-            employee_no="",
-            name="",
-        ),
-    ]
-
-
-def make_mock_api(events: list[AccessEvent] | None = None) -> MagicMock:
-    """API stub with sensible defaults for every coordinator call."""
-    api = MagicMock()
-    api.async_get_device_info = AsyncMock(return_value=TEST_DEVICE)
-    api.async_get_door_capabilities = AsyncMock(return_value=TEST_DOOR_CAPS)
-    api.async_get_users = AsyncMock(return_value=list(TEST_USERS))
-    api.async_get_acs_events = AsyncMock(return_value=list(events or []))
-    return api
+from .conftest import TEST_DEVICE, TEST_USERS, make_burst, make_mock_api
 
 
 async def make_coordinator(

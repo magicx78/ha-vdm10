@@ -27,6 +27,10 @@ from .const import (
     CLOCK_DRIFT_MARGIN_SECONDS,
     DEFAULT_TIMEOUT,
     EVENT_MAJOR_ACS,
+    EVENT_MINOR_ACCEPTED,
+    EVENT_TYPE_ACCEPTED,
+    EVENT_TYPE_REJECTED,
+    EVENT_TYPE_UNKNOWN,
     MAX_CONCURRENT_REQUESTS,
     MAX_SEARCH_PAGES,
     PATH_ACS_EVENT,
@@ -109,6 +113,17 @@ class AccessEvent:
             self.door_no,
             self.serial_no,
         )
+
+    @property
+    def event_type(self) -> str | None:
+        """Classify a card-carrying event; None for pure status events."""
+        if not self.card_no:
+            return None
+        if self.minor == EVENT_MINOR_ACCEPTED and self.name:
+            return EVENT_TYPE_ACCEPTED
+        if not self.name:
+            return EVENT_TYPE_UNKNOWN
+        return EVENT_TYPE_REJECTED
 
 
 @dataclass(frozen=True)

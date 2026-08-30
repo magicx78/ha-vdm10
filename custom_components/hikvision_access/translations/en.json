@@ -56,5 +56,36 @@
         }
       }
     }
+  },
+  "entity": {
+    "event": {
+      "door": {
+        "name": "Door {door_no}",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "card_accepted": "Card accepted",
+              "card_rejected": "Card rejected",
+              "card_unknown": "Unknown card"
+            }
+          }
+        }
+      }
+    },
+    "sensor": {
+      "last_granted": {
+        "name": "Last granted {person}"
+      }
+    },
+    "lock": {
+      "door_opener": {
+        "name": "Door opener"
+      }
+    },
+    "button": {
+      "open_door": {
+        "name": "Open door {door_no}"
+      }
+    }
   }
 }
