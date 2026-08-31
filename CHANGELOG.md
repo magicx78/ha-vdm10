@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.1.3] - 2026-09-01
+
+### Fixed
+- **Verbindungsflut am Gerät behoben:** Die Referenz-Firmware antwortet auf
+  jede Anfrage mit `Connection: close`, solange der Client Keep-Alive nicht
+  ausdrücklich anfordert — obwohl HTTP/1.1 es zum Standard macht. Gemessen:
+  6 Anfragen erzeugten 6 TCP-Verbindungen ohne den Header und genau 1 mit
+  ihm. Bei 2 s Abfrageintervall hinterließ das rund 30 Sockets pro Minute im
+  Wartezustand und erzwang jedes Mal einen neuen Digest-Handshake. Am
+  Produktivgerät verifiziert: 43 → 23 Sockets insgesamt, davon erstmals eine
+  dauerhaft aktive Verbindung.
+- `RuntimeError("Session is closed")` beim Herunterfahren von Home Assistant
+  wird als Verbindungsfehler behandelt statt als unerwarteter Fehler.
+
+### Added
+- **Reconfigure-Flow**: Zieht das Gerät auf eine neue IP-Adresse um, lässt
+  sich das jetzt in der Oberfläche ändern, statt den Eintrag löschen zu
+  müssen. Die Seriennummer wird dabei geprüft.
+
 ## [0.1.1] - 2026-08-30
 
 ### Fixed
