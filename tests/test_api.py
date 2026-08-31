@@ -149,6 +149,43 @@ async def test_repeated_401_raises_auth_error() -> None:
         await make_api(session).async_get_device_info()
 
 
+async def test_keep_alive_header_is_always_sent() -> None:
+    """Every request asks for keep-alive by name.
+
+    The reference firmware closes the connection after each request unless
+    the client sends the header explicitly, which turns a fast poll
+    interval into a flood of short-lived connections.
+    """
+    device_xml = load_fixture("device_info.xml")
+    session = FakeSession(
+        [
+            FakeResponse(401, {"WWW-Authenticate": DIGEST_CHALLENGE_MD5}),
+            FakeResponse(200, {}, device_xml),
+        ]
+    )
+    await make_api(session).async_get_device_info()
+
+    for _method, _url, kwargs in session.calls:
+        assert kwargs["headers"]["Connection"] == "keep-alive"
+
+
+async def test_keep_alive_does_not_override_content_type() -> None:
+    """The XML content type survives alongside the keep-alive header."""
+    session = FakeSession([FakeResponse(200, {}, "<ResponseStatus/>")])
+    await make_api(session).async_open_door(1)
+
+    headers = session.calls[0][2]["headers"]
+    assert headers["Connection"] == "keep-alive"
+    assert headers["Content-Type"] == "application/xml"
+
+
+async def test_session_closed_is_connection_error() -> None:
+    """A closed shared session (HA shutdown) is not an unexpected error."""
+    session = FakeSession([RuntimeError("Session is closed")])
+    with pytest.raises(HikvisionConnectionError):
+        await make_api(session).async_get_device_info()
+
+
 async def test_401_without_challenge_is_transient_not_auth() -> None:
     """A 401 lacking a Digest challenge is a busy device, not bad creds."""
     session = FakeSession([FakeResponse(401, {}, "device busy")])

@@ -307,7 +307,19 @@ class HikvisionAccessAPI:
         async with self._semaphore:
             try:
                 for attempt in (1, 2):
-                    headers = dict(kwargs.get("headers") or {})
+                    # Connection: keep-alive must be sent EXPLICITLY. The
+                    # firmware answers every request with "Connection: close"
+                    # unless the client asks for keep-alive by name, even
+                    # though HTTP/1.1 makes it the default — measured on
+                    # V3.7.1 build 251112: 6 requests produced 6 TCP
+                    # connections without the header and exactly 1 with it.
+                    # Without it a 2 s poll interval means a new connection
+                    # (and a fresh Digest handshake) every 2 seconds, which
+                    # piles up TIME_WAIT sockets on the device.
+                    headers = {
+                        "Connection": "keep-alive",
+                        **(kwargs.get("headers") or {}),
+                    }
                     if self._auth.has_challenge:
                         headers["Authorization"] = self._auth.authorization_header(
                             method, uri
@@ -360,6 +372,14 @@ class HikvisionAccessAPI:
             except aiohttp.ClientError as err:
                 raise HikvisionConnectionError(
                     f"Cannot reach device for {method} {uri}: {err}"
+                ) from err
+            except RuntimeError as err:
+                # "Session is closed" during Home Assistant shutdown: the
+                # shared session dies while a poll is still in flight. Not a
+                # device problem, so it must not surface as an unexpected
+                # coordinator error.
+                raise HikvisionConnectionError(
+                    f"Session unavailable for {method} {uri}: {err}"
                 ) from err
         raise HikvisionResponseError(f"Unreachable state for {method} {uri}")
 

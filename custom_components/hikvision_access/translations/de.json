@@ -19,6 +19,24 @@
           "verify_ssl": "Nur relevant, wenn HTTPS aktiviert ist."
         }
       },
+      "reconfigure": {
+        "title": "Verbindungsdaten ändern",
+        "description": "Dafür gedacht, wenn das Gerät eine neue IP-Adresse bekommen hat. Es muss dasselbe Gerät bleiben — die Seriennummer wird geprüft.",
+        "data": {
+          "host": "Host",
+          "port": "Port",
+          "username": "Benutzername",
+          "password": "Passwort",
+          "ssl": "HTTPS verwenden",
+          "verify_ssl": "SSL-Zertifikat prüfen"
+        },
+        "data_description": {
+          "host": "IP-Adresse oder Hostname des Geräts.",
+          "port": "ISAPI-Port, üblicherweise 80 (bzw. 443 mit HTTPS).",
+          "username": "Gerätebenutzer, üblicherweise admin.",
+          "verify_ssl": "Nur relevant, wenn HTTPS aktiviert ist."
+        }
+      },
       "reauth_confirm": {
         "title": "Zugangsdaten neu eingeben",
         "description": "Das Gerät hat die gespeicherten Zugangsdaten wiederholt abgelehnt. Gib die aktuellen ein.",

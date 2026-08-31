@@ -19,6 +19,24 @@
           "verify_ssl": "Only relevant when HTTPS is enabled."
         }
       },
+      "reconfigure": {
+        "title": "Change connection settings",
+        "description": "Use this after the device moved to a new IP address. It must still be the same device — the serial number is checked.",
+        "data": {
+          "host": "Host",
+          "port": "Port",
+          "username": "Username",
+          "password": "Password",
+          "ssl": "Use HTTPS",
+          "verify_ssl": "Verify SSL certificate"
+        },
+        "data_description": {
+          "host": "IP address or hostname of the device.",
+          "port": "ISAPI port, usually 80 (or 443 with HTTPS).",
+          "username": "Device user, usually admin.",
+          "verify_ssl": "Only relevant when HTTPS is enabled."
+        }
+      },
       "reauth_confirm": {
         "title": "Re-enter credentials",
         "description": "The device rejected the stored credentials repeatedly. Enter the current ones.",

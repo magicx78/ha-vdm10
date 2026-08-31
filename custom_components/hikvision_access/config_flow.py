@@ -138,6 +138,31 @@ class HikvisionAccessConfigFlow(ConfigFlow, domain=DOMAIN):
             errors=errors,
         )
 
+    async def async_step_reconfigure(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Change connection settings of an existing entry.
+
+        The common case is a device that moved to a new IP. The serial
+        number must still match, otherwise this would silently repoint the
+        entry at a different device.
+        """
+        errors: dict[str, str] = {}
+        entry = self._get_reconfigure_entry()
+        if user_input is not None:
+            device, errors = await self._async_validate(user_input)
+            if device is not None:
+                await self.async_set_unique_id(device.serial_number)
+                self._abort_if_unique_id_mismatch()
+                return self.async_update_reload_and_abort(
+                    entry, data_updates=user_input
+                )
+        return self.async_show_form(
+            step_id="reconfigure",
+            data_schema=_build_user_schema(user_input or dict(entry.data)),
+            errors=errors,
+        )
+
     async def async_step_reauth(self, entry_data: dict[str, Any]) -> ConfigFlowResult:
         """Start re-authentication after repeated credential rejections."""
         return await self.async_step_reauth_confirm()
