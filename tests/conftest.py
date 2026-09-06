@@ -115,6 +115,7 @@ def make_mock_api(events: list[AccessEvent] | None = None) -> MagicMock:
     api.async_get_users = AsyncMock(return_value=list(TEST_USERS))
     api.async_get_acs_events = AsyncMock(return_value=list(events or []))
     api.async_open_door = AsyncMock()
+    api.async_reboot = AsyncMock()
     return api
 
 

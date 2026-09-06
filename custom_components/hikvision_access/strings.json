@@ -103,6 +103,9 @@
     "button": {
       "open_door": {
         "name": "Open door {door_no}"
+      },
+      "restart": {
+        "name": "Restart"
       }
     }
   }

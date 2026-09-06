@@ -37,6 +37,7 @@ PATH_REMOTE_DOOR = "/ISAPI/AccessControl/RemoteControl/door/{door_no}"
 PATH_ACS_EVENT = "/ISAPI/AccessControl/AcsEvent?format=json"
 PATH_USER_SEARCH = "/ISAPI/AccessControl/UserInfo/Search?format=json"
 PATH_USER_COUNT = "/ISAPI/AccessControl/UserInfo/Count?format=json"
+PATH_REBOOT = "/ISAPI/System/reboot"
 
 # AcsEvent codes (verified against VDM10-VM-2W-2.0, V3.7.1 build 251112).
 # Every card swipe produces a burst: minor 1 (accepted, carries the name),

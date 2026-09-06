@@ -279,6 +279,18 @@ async def test_acs_event_query_window() -> None:
     assert cond["endTime"] == "2026-08-30T18:05:00"
 
 
+async def test_reboot_sends_put_without_body() -> None:
+    """The reboot is a bare PUT on /ISAPI/System/reboot."""
+    session = FakeSession([FakeResponse(200, {}, "<ResponseStatus/>")])
+    await make_api(session).async_reboot()
+
+    method, url, kwargs = session.calls[0]
+    assert method == "PUT"
+    assert url.endswith("/ISAPI/System/reboot")
+    assert "data" not in kwargs
+    assert "json" not in kwargs
+
+
 async def test_open_door_sends_put_with_xml() -> None:
     """The door command is a PUT with the RemoteControlDoor XML body."""
     session = FakeSession([FakeResponse(200, {}, "<ResponseStatus/>")])

@@ -36,6 +36,7 @@ from .const import (
     PATH_ACS_EVENT,
     PATH_DEVICE_INFO,
     PATH_DOOR_CAPABILITIES,
+    PATH_REBOOT,
     PATH_REMOTE_DOOR,
     PATH_USER_COUNT,
     PATH_USER_SEARCH,
@@ -471,6 +472,14 @@ class HikvisionAccessAPI:
         await self._request(
             "PUT", PATH_REMOTE_DOOR.format(door_no=door_no), xml_payload=xml
         )
+
+    async def async_reboot(self) -> None:
+        """Reboot the device (bare PUT, no body).
+
+        The device drops off the network for a minute or two afterwards;
+        callers must expect the following requests to fail.
+        """
+        await self._request("PUT", PATH_REBOOT)
 
     @staticmethod
     def _decode_json(body: str) -> dict[str, Any]:

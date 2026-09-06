@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.1.4] - 2026-09-06
+
+### Added
+- **Neustart-Taster** (`button`, Geräteklasse „Neustart", Kategorie
+  Konfiguration): sendet `PUT /ISAPI/System/reboot`. Gedacht für
+  Wartungs-Automationen, die das Gerät nachts neu starten — ersetzt den
+  entsprechenden Dienst von `hikvision_next`. Das Gerät ist danach ein bis
+  zwei Minuten nicht erreichbar; der Coordinator fängt die Fehl-Polls ab.
+
 ## [0.1.3] - 2026-09-01
 
 ### Fixed
