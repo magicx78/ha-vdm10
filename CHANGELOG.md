@@ -8,6 +8,10 @@
   Wartungs-Automationen, die das Gerät nachts neu starten — ersetzt den
   entsprechenden Dienst von `hikvision_next`. Das Gerät ist danach ein bis
   zwei Minuten nicht erreichbar; der Coordinator fängt die Fehl-Polls ab.
+- Am Produktivgerät (VDM10, build 251112) verifiziert: 15 s nach dem
+  Tastendruck war die Station vom Netz, nach rund 55 s antwortete sie
+  wieder und lieferte dann etwa 80 s lang nur 401 (Boot-Phase). Der
+  Coordinator hat das ohne Re-Auth-Aufforderung überstanden.
 
 ## [0.1.3] - 2026-09-01
 
