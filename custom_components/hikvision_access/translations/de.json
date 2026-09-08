@@ -28,13 +28,17 @@
           "username": "Benutzername",
           "password": "Passwort",
           "ssl": "HTTPS verwenden",
-          "verify_ssl": "SSL-Zertifikat prüfen"
+          "verify_ssl": "SSL-Zertifikat prüfen",
+          "two_way_audio_guard": "Gegensprech-Wächter",
+          "two_way_audio_check_interval": "Prüfintervall Gegensprechen (s)"
         },
         "data_description": {
           "host": "IP-Adresse oder Hostname des Geräts.",
           "port": "ISAPI-Port, üblicherweise 80 (bzw. 443 mit HTTPS).",
           "username": "Gerätebenutzer, üblicherweise admin.",
-          "verify_ssl": "Nur relevant, wenn HTTPS aktiviert ist."
+          "verify_ssl": "Nur relevant, wenn HTTPS aktiviert ist.",
+          "two_way_audio_guard": "Schaltet den ISAPI-Gegensprechkanal automatisch wieder ein, wenn das Gerät ihn von selbst abschaltet (beobachtet nach Firmware-Updates, abgerissenen ISAPI-Sitzungen und go2rtc-Neustarts). Ohne den Wächter fallen Gegensprechen und Ansagen stillschweigend aus.",
+          "two_way_audio_check_interval": "Wie oft der Kanal geprüft wird. Die Prüfung ist eine einzelne zusätzliche Anfrage und verzögert die Zutritts-Abfrage nie."
         }
       },
       "reauth_confirm": {
@@ -65,12 +69,16 @@
         "data": {
           "poll_interval": "Abfrageintervall (Sekunden)",
           "mask_card_data": "Kartennummern maskieren",
-          "door_pulse_seconds": "Türimpuls-Dauer (Sekunden)"
+          "door_pulse_seconds": "Türimpuls-Dauer (Sekunden)",
+          "two_way_audio_guard": "Gegensprech-Wächter",
+          "two_way_audio_check_interval": "Prüfintervall Gegensprechen (s)"
         },
         "data_description": {
           "poll_interval": "Wie oft das Zutrittsprotokoll abgefragt wird. Kleiner bedeutet schnellere Reaktion.",
           "mask_card_data": "Zeigt in Entitäts-Attributen nur die letzten Stellen von Karten- und Personalnummern. Recorder-Verlauf, Backups und Screenshots enthalten dann nie die vollen Nummern.",
-          "door_pulse_seconds": "Für Relais-Kommandos, die ein explizites Ausschalten brauchen."
+          "door_pulse_seconds": "Für Relais-Kommandos, die ein explizites Ausschalten brauchen.",
+          "two_way_audio_guard": "Schaltet den ISAPI-Gegensprechkanal automatisch wieder ein, wenn das Gerät ihn von selbst abschaltet (beobachtet nach Firmware-Updates, abgerissenen ISAPI-Sitzungen und go2rtc-Neustarts). Ohne den Wächter fallen Gegensprechen und Ansagen stillschweigend aus.",
+          "two_way_audio_check_interval": "Wie oft der Kanal geprüft wird. Die Prüfung ist eine einzelne zusätzliche Anfrage und verzögert die Zutritts-Abfrage nie."
         }
       }
     }
@@ -107,6 +115,20 @@
       "restart": {
         "name": "Neu starten"
       }
+    },
+    "switch": {
+      "two_way_audio": {
+        "name": "Gegensprechen"
+      },
+      "two_way_audio_guard": {
+        "name": "Gegensprech-Wächter"
+      }
+    }
+  },
+  "issues": {
+    "two_way_audio_disabled": {
+      "title": "Gegensprechen an {device} ließ sich nicht wieder einschalten",
+      "description": "Das Gerät meldet seinen Gegensprechkanal als abgeschaltet, und der Wächter konnte ihn dreimal in Folge nicht wieder einschalten. Gegensprechen und Ansagen über den ISAPI-Rückkanal funktionieren erst wieder, wenn der Kanal an ist. Prüfe die Weboberfläche des Geräts (Konfiguration → Audio/Video → Gegensprechen) und das Log der Integration; die Meldung verschwindet automatisch, sobald der Kanal wieder an ist."
     }
   }
 }

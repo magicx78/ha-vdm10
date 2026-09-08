@@ -18,6 +18,7 @@ from datetime import datetime, timedelta
 import logging
 from typing import Any
 from xml.etree import ElementTree as ET
+from xml.sax.saxutils import escape as xml_escape
 
 import aiohttp
 
@@ -26,6 +27,7 @@ from .const import (
     ACS_EVENT_PAGE_SIZE,
     CLOCK_DRIFT_MARGIN_SECONDS,
     DEFAULT_TIMEOUT,
+    DEFAULT_TWO_WAY_AUDIO_CHANNEL,
     EVENT_MAJOR_ACS,
     EVENT_MINOR_ACCEPTED,
     EVENT_TYPE_ACCEPTED,
@@ -38,6 +40,7 @@ from .const import (
     PATH_DOOR_CAPABILITIES,
     PATH_REBOOT,
     PATH_REMOTE_DOOR,
+    PATH_TWO_WAY_AUDIO_CHANNEL,
     PATH_USER_COUNT,
     PATH_USER_SEARCH,
 )
@@ -136,6 +139,20 @@ class DoorCapabilities:
     commands: tuple[str, ...]
 
 
+@dataclass(frozen=True)
+class TwoWayAudioState:
+    """State of one ISAPI two-way audio channel."""
+
+    channel: int
+    enabled: bool
+    compression: str
+
+
+def _xml_local_name(element: ET.Element) -> str:
+    """Return an element's tag without its XML namespace."""
+    return element.tag.split("}")[-1]
+
+
 def _xml_child_text(root: ET.Element, local_name: str) -> str:
     """Return a direct child's text, ignoring XML namespaces."""
     for child in root:
@@ -184,6 +201,63 @@ def parse_door_capabilities(xml_text: str) -> DoorCapabilities:
             opt = child.get("opt", "open")
             commands = tuple(part.strip() for part in opt.split(",") if part.strip())
     return DoorCapabilities(door_min=door_min, door_max=door_max, commands=commands)
+
+
+def parse_two_way_audio(xml_text: str, channel: int = 1) -> TwoWayAudioState:
+    """Parse a TwoWayAudioChannel document (single object or channel list).
+
+    ``audioCompressionType`` is kept verbatim: a later PUT must echo the
+    device's own value instead of assuming a codec.
+    """
+    try:
+        root = ET.fromstring(xml_text)
+    except ET.ParseError as err:
+        raise HikvisionResponseError(
+            f"TwoWayAudio channel is not valid XML: {err}"
+        ) from err
+    node: ET.Element | None = None
+    if _xml_local_name(root) == "TwoWayAudioChannel":
+        node = root
+    else:
+        candidates = [
+            child for child in root if _xml_local_name(child) == "TwoWayAudioChannel"
+        ]
+        for candidate in candidates:
+            if _xml_child_text(candidate, "id") == str(channel):
+                node = candidate
+                break
+        if node is None and candidates:
+            node = candidates[0]
+    if node is None:
+        raise HikvisionResponseError("TwoWayAudio response lacks a channel")
+    enabled_text = _xml_child_text(node, "enabled").lower()
+    if enabled_text not in ("true", "false"):
+        raise HikvisionResponseError("TwoWayAudio channel lacks an enabled flag")
+    return TwoWayAudioState(
+        channel=int(_xml_child_text(node, "id") or channel),
+        enabled=enabled_text == "true",
+        compression=_xml_child_text(node, "audioCompressionType"),
+    )
+
+
+def parse_response_status(xml_text: str) -> tuple[int | None, str]:
+    """Parse an ISAPI ResponseStatus body into (statusCode, statusString).
+
+    Returns (None, "") for an empty or unparsable body so callers can stay
+    lenient about firmwares that answer a PUT without a status document.
+    """
+    if not xml_text.strip():
+        return None, ""
+    try:
+        root = ET.fromstring(xml_text)
+    except ET.ParseError:
+        return None, ""
+    code_text = _xml_child_text(root, "statusCode")
+    try:
+        code = int(code_text) if code_text else None
+    except ValueError:
+        code = None
+    return code, _xml_child_text(root, "statusString")
 
 
 def parse_acs_event_time(raw: str) -> datetime:
@@ -472,6 +546,47 @@ class HikvisionAccessAPI:
         await self._request(
             "PUT", PATH_REMOTE_DOOR.format(door_no=door_no), xml_payload=xml
         )
+
+    async def async_get_two_way_audio(
+        self, channel: int = DEFAULT_TWO_WAY_AUDIO_CHANNEL
+    ) -> TwoWayAudioState:
+        """Fetch whether the ISAPI two-way audio channel is enabled."""
+        body = await self._request(
+            "GET", PATH_TWO_WAY_AUDIO_CHANNEL.format(channel=channel)
+        )
+        return parse_two_way_audio(body, channel)
+
+    async def async_set_two_way_audio(
+        self,
+        channel: int,
+        enabled: bool,
+        *,
+        compression: str | None = None,
+    ) -> None:
+        """Enable or disable the two-way audio channel.
+
+        The device's own ``audioCompressionType`` is echoed back unchanged;
+        if the caller does not pass it, it is fetched first.
+        """
+        if compression is None:
+            compression = (await self.async_get_two_way_audio(channel)).compression
+        xml = (
+            '<?xml version="1.0" encoding="UTF-8"?>'
+            '<TwoWayAudioChannel version="2.0" '
+            'xmlns="http://www.isapi.org/ver20/XMLSchema">'
+            f"<id>{channel}</id>"
+            f"<enabled>{'true' if enabled else 'false'}</enabled>"
+            f"<audioCompressionType>{xml_escape(compression)}</audioCompressionType>"
+            "</TwoWayAudioChannel>"
+        )
+        body = await self._request(
+            "PUT", PATH_TWO_WAY_AUDIO_CHANNEL.format(channel=channel), xml_payload=xml
+        )
+        code, status = parse_response_status(body)
+        if code is not None and code != 1:
+            raise HikvisionResponseError(
+                f"Device refused the two-way audio change (status {code} {status})"
+            )
 
     async def async_reboot(self) -> None:
         """Reboot the device (bare PUT, no body).

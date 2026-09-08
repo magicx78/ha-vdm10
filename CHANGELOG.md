@@ -1,5 +1,53 @@
 # Changelog
 
+## [0.2.0] - 2026-09-08
+
+### Added
+- **Gegensprech-Wächter (Two-way audio guard):** Die Referenz-Firmware
+  schaltet ihren ISAPI-Gegensprechkanal von selbst ab (dreimal seit
+  02.09.2026: nach einem Firmware-Update, nach abgerissenen ISAPI-Sitzungen,
+  nach einem go2rtc-Umzug) — ohne Fehlermeldung, Gegensprechen und Ansagen
+  über den go2rtc-`isapi://`-Rückkanal sind dann einfach tot. Der
+  Coordinator prüft den Kanal jetzt gedrosselt im normalen Poll mit (Option
+  `two_way_audio_check_interval`, Standard 60 s, 10–3600 s) und schaltet
+  ihn bei aktivem Wächter (Option `two_way_audio_guard`, Standard an) sofort
+  wieder ein: `PUT` mit dem vom Gerät gemeldeten `audioCompressionType`,
+  `GET` zur Bestätigung, Info-Log, Zähler und Home-Assistant-Ereignis
+  `hikvision_access_two_way_audio_restored` (`entry_id`, `device`,
+  `channel`, `timestamp`, `repairs`). Nach drei fehlgeschlagenen
+  Reparaturen in Folge erscheint eine Reparatur-Meldung
+  (`two_way_audio_disabled`, Warnung), die automatisch verschwindet, sobald
+  der Kanal wieder an ist. Ersetzt das manuelle Behelfsskript
+  `vdm10_fix_twowayaudio.py`.
+- `switch` **Gegensprechen** (Kategorie Konfiguration, `mdi:account-voice`):
+  Kanalzustand aus dem Coordinator; Ein-/Ausschalten sendet das `PUT` und
+  liest nur diesen Wert neu (kein voller Ereignis-Poll). Attribute
+  `audio_compression`, `last_checked`, `repairs_count`, `guard_enabled`.
+- `switch` **Gegensprech-Wächter** (Kategorie Konfiguration): spiegelt die
+  Option und aktualisiert sie beim Umschalten **ohne Neuladen** des
+  Eintrags — der Coordinator liest beide Wächter-Optionen live. Andere
+  Optionsänderungen laden den Eintrag weiterhin neu.
+- Beide Optionen im Options-Flow und im Reconfigure-Flow; Übersetzungen
+  de/en inklusive Reparatur-Text.
+- **Diagnose-Download** (`diagnostics.py`): Eintrag mit maskierten
+  Zugangsdaten, Geräteinfo ohne Seriennummer/MAC, Personenzahl mit
+  maskierten Personalnummern, letztes Ereignis maskiert, kompletter
+  Gegensprech-Block (Zustand, Codec, letzte Prüfung, Intervall, Wächter,
+  Zähler, Fehlversuche, Meldung offen).
+- API: `async_get_two_way_audio()` / `async_set_two_way_audio()` mit
+  XML-Parsern für Einzelkanal, Kanalliste und `ResponseStatus`.
+
+### Notes
+- Ein Fehlschlag der Kanalprüfung ist vollständig vom Ereignis-Poll
+  isoliert (eigener `try`, nur Debug-Log, Zustand „unbekannt") — auch bei
+  einem Fehler im Wächter selbst. Der Ereignis-Poll bleibt unverändert bei
+  2 s.
+- 94 Tests (vorher 72): Parser gegen anonymisierte Fixtures, Drosselung
+  (kein Check vor Ablauf des Intervalls), Reparatur + Ereignis, Wächter aus,
+  Check-Fehler ohne Auswirkung auf den Poll, Schalter, Reparatur-Meldung
+  nach drei Fehlversuchen und deren Auflösung, keine Ereignis-Wiederholung
+  beim Out-of-band-Publish, Options-/Reconfigure-Flow, Diagnose.
+
 ## [0.1.4] - 2026-09-06
 
 ### Added

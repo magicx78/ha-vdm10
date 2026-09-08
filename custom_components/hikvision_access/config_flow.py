@@ -35,14 +35,20 @@ from .const import (
     DEFAULT_MASK_CARD_DATA,
     DEFAULT_POLL_INTERVAL,
     DEFAULT_PORT,
+    DEFAULT_TWO_WAY_AUDIO_CHECK_INTERVAL,
+    DEFAULT_TWO_WAY_AUDIO_GUARD,
     DEFAULT_USE_SSL,
     DEFAULT_VERIFY_SSL,
     DOMAIN,
     MAX_POLL_INTERVAL,
+    MAX_TWO_WAY_AUDIO_CHECK_INTERVAL,
     MIN_POLL_INTERVAL,
+    MIN_TWO_WAY_AUDIO_CHECK_INTERVAL,
     OPT_DOOR_PULSE_SECONDS,
     OPT_MASK_CARD_DATA,
     OPT_POLL_INTERVAL,
+    OPT_TWO_WAY_AUDIO_CHECK_INTERVAL,
+    OPT_TWO_WAY_AUDIO_GUARD,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -75,6 +81,32 @@ def _build_user_schema(defaults: dict[str, Any] | None = None) -> vol.Schema:
             ): bool,
         }
     )
+
+
+def _two_way_audio_option_fields(options: dict[str, Any]) -> dict[Any, Any]:
+    """Schema fields for the two-way audio guard options (options + reconfigure)."""
+    return {
+        vol.Required(
+            OPT_TWO_WAY_AUDIO_GUARD,
+            default=options.get(OPT_TWO_WAY_AUDIO_GUARD, DEFAULT_TWO_WAY_AUDIO_GUARD),
+        ): bool,
+        vol.Required(
+            OPT_TWO_WAY_AUDIO_CHECK_INTERVAL,
+            default=options.get(
+                OPT_TWO_WAY_AUDIO_CHECK_INTERVAL,
+                DEFAULT_TWO_WAY_AUDIO_CHECK_INTERVAL,
+            ),
+        ): vol.All(
+            vol.Coerce(int),
+            vol.Range(
+                min=MIN_TWO_WAY_AUDIO_CHECK_INTERVAL,
+                max=MAX_TWO_WAY_AUDIO_CHECK_INTERVAL,
+            ),
+        ),
+    }
+
+
+TWO_WAY_AUDIO_OPTION_KEYS = (OPT_TWO_WAY_AUDIO_GUARD, OPT_TWO_WAY_AUDIO_CHECK_INTERVAL)
 
 
 class HikvisionAccessConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -150,17 +182,26 @@ class HikvisionAccessConfigFlow(ConfigFlow, domain=DOMAIN):
         errors: dict[str, str] = {}
         entry = self._get_reconfigure_entry()
         if user_input is not None:
+            option_updates = {
+                key: user_input.pop(key)
+                for key in TWO_WAY_AUDIO_OPTION_KEYS
+                if key in user_input
+            }
             device, errors = await self._async_validate(user_input)
             if device is not None:
                 await self.async_set_unique_id(device.serial_number)
                 self._abort_if_unique_id_mismatch()
                 return self.async_update_reload_and_abort(
-                    entry, data_updates=user_input
+                    entry,
+                    data_updates=user_input,
+                    options={**entry.options, **option_updates},
                 )
+        defaults = user_input or dict(entry.data)
+        schema = _build_user_schema(defaults).extend(
+            _two_way_audio_option_fields(dict(entry.options))
+        )
         return self.async_show_form(
-            step_id="reconfigure",
-            data_schema=_build_user_schema(user_input or dict(entry.data)),
-            errors=errors,
+            step_id="reconfigure", data_schema=schema, errors=errors
         )
 
     async def async_step_reauth(self, entry_data: dict[str, Any]) -> ConfigFlowResult:
@@ -198,7 +239,7 @@ class HikvisionAccessConfigFlow(ConfigFlow, domain=DOMAIN):
 
 
 class HikvisionAccessOptionsFlow(OptionsFlow):
-    """Options: poll interval, card masking, door pulse length."""
+    """Options: poll interval, card masking, door pulse, two-way audio guard."""
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
@@ -228,6 +269,7 @@ class HikvisionAccessOptionsFlow(OptionsFlow):
                             OPT_DOOR_PULSE_SECONDS, DEFAULT_DOOR_PULSE_SECONDS
                         ),
                     ): vol.All(vol.Coerce(float), vol.Range(min=0.5, max=10.0)),
+                    **_two_way_audio_option_fields(dict(options)),
                 }
             ),
         )

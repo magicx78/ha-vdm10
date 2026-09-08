@@ -37,6 +37,7 @@ from custom_components.hikvision_access.api import (
     HikvisionAccessAPI,
     HikvisionDeviceInfo,
     HikvisionUser,
+    TwoWayAudioState,
 )
 from custom_components.hikvision_access.const import DOMAIN
 
@@ -67,6 +68,9 @@ TEST_USERS = [
     HikvisionUser(employee_no="Alice", name="Alice", user_type="normal", num_cards=1),
     HikvisionUser(employee_no="Bob", name="Bob", user_type="normal", num_cards=1),
 ]
+
+AUDIO_ON = TwoWayAudioState(channel=1, enabled=True, compression="G.711ulaw")
+AUDIO_OFF = TwoWayAudioState(channel=1, enabled=False, compression="G.711ulaw")
 
 TEST_ENTRY_DATA = {
     CONF_HOST: "192.0.2.10",
@@ -116,6 +120,8 @@ def make_mock_api(events: list[AccessEvent] | None = None) -> MagicMock:
     api.async_get_acs_events = AsyncMock(return_value=list(events or []))
     api.async_open_door = AsyncMock()
     api.async_reboot = AsyncMock()
+    api.async_get_two_way_audio = AsyncMock(return_value=AUDIO_ON)
+    api.async_set_two_way_audio = AsyncMock()
     return api
 
 
