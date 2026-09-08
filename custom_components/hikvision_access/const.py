@@ -26,8 +26,18 @@ MAX_CONCURRENT_REQUESTS = 1
 OPT_POLL_INTERVAL = "poll_interval"
 OPT_MASK_CARD_DATA = "mask_card_data"
 OPT_DOOR_PULSE_SECONDS = "door_pulse_seconds"
+OPT_TWO_WAY_AUDIO_GUARD = "two_way_audio_guard"
+OPT_TWO_WAY_AUDIO_CHECK_INTERVAL = "two_way_audio_check_interval"
 DEFAULT_MASK_CARD_DATA = True
 DEFAULT_DOOR_PULSE_SECONDS = 2.0
+DEFAULT_TWO_WAY_AUDIO_GUARD = True
+DEFAULT_TWO_WAY_AUDIO_CHECK_INTERVAL = 60
+MIN_TWO_WAY_AUDIO_CHECK_INTERVAL = 10
+MAX_TWO_WAY_AUDIO_CHECK_INTERVAL = 3600
+
+# Options the coordinator reads live on every use. Changing only these must
+# not reload the entry (the guard switch toggles one of them from an entity).
+LIVE_OPTIONS = frozenset({OPT_TWO_WAY_AUDIO_GUARD, OPT_TWO_WAY_AUDIO_CHECK_INTERVAL})
 
 # ISAPI paths
 PATH_DEVICE_INFO = "/ISAPI/System/deviceInfo"
@@ -38,6 +48,18 @@ PATH_ACS_EVENT = "/ISAPI/AccessControl/AcsEvent?format=json"
 PATH_USER_SEARCH = "/ISAPI/AccessControl/UserInfo/Search?format=json"
 PATH_USER_COUNT = "/ISAPI/AccessControl/UserInfo/Count?format=json"
 PATH_REBOOT = "/ISAPI/System/reboot"
+PATH_TWO_WAY_AUDIO_CHANNEL = "/ISAPI/System/TwoWayAudio/channels/{channel}"
+
+# Two-way audio guard. The reference firmware silently switches its ISAPI
+# two-way audio channel off — seen after a firmware update, after hard-torn
+# ISAPI sessions and after a go2rtc move (three times within a week). The
+# isapi:// backchannel of go2rtc then dies without any error, so intercom
+# and announcements at the door station go mute. The guard re-enables the
+# channel as soon as a throttled check finds it off.
+DEFAULT_TWO_WAY_AUDIO_CHANNEL = 1
+TWO_WAY_AUDIO_REPAIR_ATTEMPTS = 3
+EVENT_TWO_WAY_AUDIO_RESTORED = f"{DOMAIN}_two_way_audio_restored"
+ISSUE_TWO_WAY_AUDIO_DISABLED = "two_way_audio_disabled"
 
 # AcsEvent codes (verified against VDM10-VM-2W-2.0, V3.7.1 build 251112).
 # Every card swipe produces a burst: minor 1 (accepted, carries the name),

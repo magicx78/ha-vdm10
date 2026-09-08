@@ -28,13 +28,17 @@
           "username": "Username",
           "password": "Password",
           "ssl": "Use HTTPS",
-          "verify_ssl": "Verify SSL certificate"
+          "verify_ssl": "Verify SSL certificate",
+          "two_way_audio_guard": "Two-way audio guard",
+          "two_way_audio_check_interval": "Two-way audio check interval (s)"
         },
         "data_description": {
           "host": "IP address or hostname of the device.",
           "port": "ISAPI port, usually 80 (or 443 with HTTPS).",
           "username": "Device user, usually admin.",
-          "verify_ssl": "Only relevant when HTTPS is enabled."
+          "verify_ssl": "Only relevant when HTTPS is enabled.",
+          "two_way_audio_guard": "Re-enables the ISAPI two-way audio channel automatically when the device switches it off by itself (seen after firmware updates, torn ISAPI sessions and go2rtc restarts). Without it, intercom and announcements die silently.",
+          "two_way_audio_check_interval": "How often the channel is checked. The check is a single extra request and never delays the access event poll."
         }
       },
       "reauth_confirm": {
@@ -65,12 +69,16 @@
         "data": {
           "poll_interval": "Poll interval (seconds)",
           "mask_card_data": "Mask card numbers",
-          "door_pulse_seconds": "Door pulse length (seconds)"
+          "door_pulse_seconds": "Door pulse length (seconds)",
+          "two_way_audio_guard": "Two-way audio guard",
+          "two_way_audio_check_interval": "Two-way audio check interval (s)"
         },
         "data_description": {
           "poll_interval": "How often the access event log is polled. Lower means faster reaction.",
           "mask_card_data": "Show only the last digits of card and employee numbers in entity attributes. Recorder history, backups and screenshots then never contain the full numbers.",
-          "door_pulse_seconds": "Used for relay-style door commands that need an explicit off."
+          "door_pulse_seconds": "Used for relay-style door commands that need an explicit off.",
+          "two_way_audio_guard": "Re-enables the ISAPI two-way audio channel automatically when the device switches it off by itself (seen after firmware updates, torn ISAPI sessions and go2rtc restarts). Without it, intercom and announcements die silently.",
+          "two_way_audio_check_interval": "How often the channel is checked. The check is a single extra request and never delays the access event poll."
         }
       }
     }
@@ -107,6 +115,20 @@
       "restart": {
         "name": "Restart"
       }
+    },
+    "switch": {
+      "two_way_audio": {
+        "name": "Two-way audio"
+      },
+      "two_way_audio_guard": {
+        "name": "Two-way audio guard"
+      }
+    }
+  },
+  "issues": {
+    "two_way_audio_disabled": {
+      "title": "Two-way audio on {device} could not be re-enabled",
+      "description": "The device reports its two-way audio channel as disabled and the guard failed to switch it back on three times in a row. Intercom and announcements via the ISAPI backchannel will not work until it is enabled again. Check the device's web interface (Configuration → Audio/Video → Two-way audio) and the integration log; the issue clears automatically once the channel is on."
     }
   }
 }

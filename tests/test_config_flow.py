@@ -28,6 +28,8 @@ from custom_components.hikvision_access.const import (
     OPT_DOOR_PULSE_SECONDS,
     OPT_MASK_CARD_DATA,
     OPT_POLL_INTERVAL,
+    OPT_TWO_WAY_AUDIO_CHECK_INTERVAL,
+    OPT_TWO_WAY_AUDIO_GUARD,
 )
 
 from .conftest import TEST_DEVICE
@@ -207,6 +209,45 @@ async def test_reconfigure_updates_host(hass: HomeAssistant) -> None:
     assert result["type"] is FlowResultType.ABORT
     assert result["reason"] == "reconfigure_successful"
     assert entry.data[CONF_HOST] == "10.0.0.99"
+    # Omitted guard options fall back to their defaults, never into data.
+    assert OPT_TWO_WAY_AUDIO_GUARD not in entry.data
+    assert entry.options[OPT_TWO_WAY_AUDIO_GUARD] is True
+    assert entry.options[OPT_TWO_WAY_AUDIO_CHECK_INTERVAL] == 60
+
+
+async def test_reconfigure_stores_two_way_audio_options(hass: HomeAssistant) -> None:
+    """The guard options on the reconfigure form land in options, not data."""
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        unique_id=TEST_DEVICE.serial_number,
+        data=USER_INPUT,
+        options={OPT_POLL_INTERVAL: 3},
+    )
+    entry.add_to_hass(hass)
+
+    result = await entry.start_reconfigure_flow(hass)
+    with (
+        patch(VALIDATE, return_value=TEST_DEVICE),
+        patch(SETUP_ENTRY, return_value=True),
+    ):
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"],
+            {
+                **USER_INPUT,
+                OPT_TWO_WAY_AUDIO_GUARD: False,
+                OPT_TWO_WAY_AUDIO_CHECK_INTERVAL: 120,
+            },
+        )
+        await hass.async_block_till_done()
+
+    assert result["type"] is FlowResultType.ABORT
+    assert result["reason"] == "reconfigure_successful"
+    assert entry.data == USER_INPUT
+    assert entry.options == {
+        OPT_POLL_INTERVAL: 3,
+        OPT_TWO_WAY_AUDIO_GUARD: False,
+        OPT_TWO_WAY_AUDIO_CHECK_INTERVAL: 120,
+    }
 
 
 async def test_reconfigure_rejects_different_device(hass: HomeAssistant) -> None:
@@ -260,6 +301,8 @@ async def test_options_flow_roundtrip(hass: HomeAssistant) -> None:
                 OPT_POLL_INTERVAL: 5,
                 OPT_MASK_CARD_DATA: False,
                 OPT_DOOR_PULSE_SECONDS: 3.0,
+                OPT_TWO_WAY_AUDIO_GUARD: False,
+                OPT_TWO_WAY_AUDIO_CHECK_INTERVAL: 300,
             },
         )
         await hass.async_block_till_done()
@@ -269,4 +312,36 @@ async def test_options_flow_roundtrip(hass: HomeAssistant) -> None:
         OPT_POLL_INTERVAL: 5,
         OPT_MASK_CARD_DATA: False,
         OPT_DOOR_PULSE_SECONDS: 3.0,
+        OPT_TWO_WAY_AUDIO_GUARD: False,
+        OPT_TWO_WAY_AUDIO_CHECK_INTERVAL: 300,
     }
+
+
+async def test_options_flow_rejects_out_of_range_interval(
+    hass: HomeAssistant,
+) -> None:
+    """The check interval is bounded to 10..3600 seconds."""
+    import pytest
+    import voluptuous as vol
+
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        unique_id=TEST_DEVICE.serial_number,
+        data=USER_INPUT,
+    )
+    entry.add_to_hass(hass)
+    with patch(SETUP_ENTRY, return_value=True):
+        assert await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+        result = await hass.config_entries.options.async_init(entry.entry_id)
+        with pytest.raises(vol.Invalid):
+            await hass.config_entries.options.async_configure(
+                result["flow_id"],
+                {
+                    OPT_POLL_INTERVAL: 5,
+                    OPT_MASK_CARD_DATA: True,
+                    OPT_DOOR_PULSE_SECONDS: 2.0,
+                    OPT_TWO_WAY_AUDIO_GUARD: True,
+                    OPT_TWO_WAY_AUDIO_CHECK_INTERVAL: 5,
+                },
+            )
